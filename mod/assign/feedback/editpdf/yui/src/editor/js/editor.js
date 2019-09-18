@@ -224,6 +224,22 @@ EDITOR.prototype = {
     editingcomment: false,
 
     /**
+     * Prevent simulated scroll
+     * @property simulatescroll
+     * @type Boolean
+     * @protected
+     */
+    simulatescroll: false,
+
+    /**
+     * Extreme scroll position
+     * @property scrollend
+     * @type int
+     * @protected
+     */
+    scrollend: 0,
+
+    /**
      * Timestamp of last scroll
      * @property lastscrolltime
      * @type int
@@ -1474,6 +1490,7 @@ EDITOR.prototype = {
      */
     previous_page: function(e) {
         e.preventDefault();
+        this.simulatescroll = false;
         this.currentpage--;
         if (this.currentpage < 0) {
             this.currentpage = 0;
@@ -1489,12 +1506,46 @@ EDITOR.prototype = {
      */
     next_page: function(e) {
         e.preventDefault();
+        this.simulatescroll = false;
         this.currentpage++;
         if (this.currentpage >= this.pages.length) {
             this.currentpage = this.pages.length - 1;
         }
         this.clear_warnings(false);
         this.change_page();
+    },
+
+    /**
+     * Simulate the transition to the next (previous) page
+     * when the canvas for drawing scrolls to extreme positions
+     * @protected
+     * @method simulate_scroll
+     */
+    simulate_scroll: function () {
+        var drawingregion, y, previousbutton, nextbutton;
+
+        drawingregion = this.get_dialogue_element(SELECTOR.DRAWINGREGION);
+        y = parseInt(drawingregion.get('scrollTop'), 10);
+
+        if (y > 0) {
+            this.simulatescroll = true;
+        }
+
+        // go to next page if it exists
+        if (drawingregion.get('scrollHeight') - drawingregion.get('scrollTop') == drawingregion.get('clientHeight')
+            && this.currentpage < this.pages.length -1) {
+            this.scrollend = y;
+            nextbutton = this.get_dialogue_element(SELECTOR.NEXTBUTTON);
+            nextbutton.simulate("click");
+            drawingregion.set('scrollTop', 1);
+        }
+
+        // go to previous page if it exists
+        if (y == 0 && this.simulatescroll == true && this.currentpage > 0) {
+            previousbutton = this.get_dialogue_element(SELECTOR.PREVIOUSBUTTON);
+            previousbutton.simulate("click");
+            drawingregion.set('scrollTop', this.scrollend - 1);
+        }
     },
 
     /**
