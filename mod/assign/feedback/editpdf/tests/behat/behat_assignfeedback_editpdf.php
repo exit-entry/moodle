@@ -108,12 +108,12 @@ class behat_assignfeedback_editpdf extends behat_base {
      *
      * @Given /^I scroll down$/
      */
-    public function i_scroll_down()
-    {
+    public function i_scroll_down() {
         $js = ' (function() {
     var instance = M.assignfeedback_editpdf.instance;
     var drawingregion = instance.get_dialogue_element(".drawingregion");
-    drawingregion.set("scrollTop", parseInt(drawingregion.get("scrollHeight"), 10) - parseInt(drawingregion.get("clientHeight"), 10));
+    drawingregion.set("scrollTop",
+    parseInt(drawingregion.get("scrollHeight"), 10) - parseInt(drawingregion.get("clientHeight"), 10));
 }()); ';
         $this->getSession()->executeScript($js);
         sleep(1);
@@ -124,8 +124,7 @@ class behat_assignfeedback_editpdf extends behat_base {
      *
      * @Given /^I scroll up$/
      */
-    public function i_scroll_up()
-    {
+    public function i_scroll_up() {
         $js = ' (function() {
     var instance = M.assignfeedback_editpdf.instance;
     var drawingregion = instance.get_dialogue_element(".drawingregion");
