@@ -224,20 +224,12 @@ EDITOR.prototype = {
     editingcomment: false,
 
     /**
-     * Prevent simulated scroll
-     * @property simulatescroll
-     * @type Boolean
-     * @protected
-     */
-    simulatescroll: false,
-
-    /**
-     * Extreme scroll position
-     * @property scrollend
+     * Timestamp of last scroll
+     * @property lastscrolltime
      * @type int
      * @protected
      */
-    scrollend: 0,
+    lastscrolltime: 0,
 
     /**
      * Timestamp of last scroll
@@ -1490,7 +1482,6 @@ EDITOR.prototype = {
      */
     previous_page: function(e) {
         e.preventDefault();
-        this.simulatescroll = false;
         this.currentpage--;
         if (this.currentpage < 0) {
             this.currentpage = 0;
@@ -1506,7 +1497,6 @@ EDITOR.prototype = {
      */
     next_page: function(e) {
         e.preventDefault();
-        this.simulatescroll = false;
         this.currentpage++;
         if (this.currentpage >= this.pages.length) {
             this.currentpage = this.pages.length - 1;
@@ -1516,35 +1506,63 @@ EDITOR.prototype = {
     },
 
     /**
+     * Prevent skipping pages
+     * when scrolling by hand or touch
+     * @protected
+     * @method skip_scroll
+     */
+    skip_scroll: function(drawingregion, page_height, scrollposition) {
+        if (scrollposition == 0 || scrollposition == page_height - 1) {
+            drawingregion.set('scrollTop', page_height - 1);
+            return true;
+        }
+
+        if (scrollposition > page_height) {
+            drawingregion.set('scrollTop', 1);
+            return true;
+        }
+
+        return false;
+    },
+
+    /**
      * Simulate the transition to the next (previous) page
      * when the canvas for drawing scrolls to extreme positions
      * @protected
      * @method simulate_scroll
      */
-    simulate_scroll: function () {
-        var drawingregion, y, previousbutton, nextbutton;
+    simulate_scroll: function() {
+        var drawingregion,
+        previousbutton,
+        nextbutton,
+        page,
+        scrollposition;
 
         drawingregion = this.get_dialogue_element(SELECTOR.DRAWINGREGION);
-        y = parseInt(drawingregion.get('scrollTop'), 10);
+        page = this.pages[this.currentpage];
+        scrollposition = drawingregion.get('scrollTop');
 
-        if (y > 0) {
-            this.simulatescroll = true;
-        }
+        // Prevent skipping multiple pages at once
+        if (this.lastscrolltime >= (Date.now() - 500)
+            && this.skip_scroll(drawingregion, page.height, scrollposition)
+        ) return;
 
-        // go to next page if it exists
-        if (drawingregion.get('scrollHeight') - drawingregion.get('scrollTop') == drawingregion.get('clientHeight')
-            && this.currentpage < this.pages.length -1) {
-            this.scrollend = y;
+        // Go to next page if it exists
+        if (scrollposition >= page.height && this.currentpage < this.pages.length - 1) {
+            this.lastscrolltime = Date.now();
             nextbutton = this.get_dialogue_element(SELECTOR.NEXTBUTTON);
             nextbutton.simulate("click");
             drawingregion.set('scrollTop', 1);
+            return;
         }
 
-        // go to previous page if it exists
-        if (y == 0 && this.simulatescroll == true && this.currentpage > 0) {
+        // Go to previous page if it exists
+        if (scrollposition <= 0 && this.currentpage > 0) {
+            this.lastscrolltime = Date.now();
             previousbutton = this.get_dialogue_element(SELECTOR.PREVIOUSBUTTON);
             previousbutton.simulate("click");
-            drawingregion.set('scrollTop', this.scrollend - 1);
+            drawingregion.set('scrollTop', page.height - 1);
+            return;
         }
     },
 
