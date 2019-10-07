@@ -1,0 +1,77 @@
+{{!
+  This file is part of Moodle - http://moodle.org/
+
+  Moodle is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  Moodle is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+  @template gradingform_rubric/level_template
+}}
+
+<td id="{{tdAttributes.id}}" class="{{tdAttributes.class}}"
+    {{# tdAttributes.tdwidth }} width="{{tdAttributes.tdwidth}}" {{/ tdAttributes.tdwidth }}
+    {{# tdAttributes.tabindex }} tabindex="{{tdAttributes.tabindex}}" {{/ tdAttributes.tabindex }}
+    {{# tdAttributes.ariaLabel }} aria-label="{{tdAttributes.ariaLabel}}" {{/ tdAttributes.ariaLabel }}
+    {{# tdAttributes.role }} role="{{tdAttributes.role}}" {{/ tdAttributes.role }}
+    {{# tdAttributes.ariaChecked }} aria-checked="{{tdAttributes.ariaChecked}}" {{/ tdAttributes.ariaChecked }}>
+    <div class="{{levelWrapper.class}}">
+        {{#displayScore}}
+            <div class="{{definition.class}}">
+                {{#DISPLAY_EDIT_FULL}}
+                    <textarea name="{{definition.params.name}}" id="{{definition.params.id}}"
+                              cols="{{definition.params.cols}}" rows="{{definition.params.rows}}"
+                              aria-label="{{definition.params.ariaLabel}}">{{definition.params.value}}</textarea>
+                {{/DISPLAY_EDIT_FULL}}
+                {{^DISPLAY_EDIT_FULL}}
+                    {{#DISPLAY_EDIT_FROZEN}}
+                        <input type="{{frozenDefinition.type}}" name="{{frozenDefinition.name}}"
+                               value="{{frozenDefinition.value}}">
+                        <input type="{{frozenScore.type}}" name="{{frozenScore.name}}" value="{{frozenScore.value}}">
+                    {{/DISPLAY_EDIT_FROZEN}}
+                    {{definition.params.value}}
+                {{/DISPLAY_EDIT_FULL}}
+            </div>
+            <div class="{{displayScoreData.class}}">
+                 <span id="{{score.paramSpan.id}}" class="{{score.paramSpan.class}}">
+                {{#DISPLAY_EDIT_FULL}}
+                    <input type="{{score.params.type}}" id="{{score.params.id}}" name="{{score.params.name}}"
+                           aria-label="{{score.params.ariaLabel}}" size="{{score.params.size}}"
+                           value="{{score.params.value}}">
+                {{/DISPLAY_EDIT_FULL}}
+                     {{^DISPLAY_EDIT_FULL}}
+                         {{score.params.value}}
+                     {{/DISPLAY_EDIT_FULL}}
+                </span>
+                points
+            </div>
+        {{/displayScore}}
+        {{#DISPLAY_EVAL}}
+            <div class="radio">
+                <input type="{{eval.params.type}}" id="{{eval.params.id}}" name="{{eval.params.name}}"
+                       value="{{eval.params.value}}"  {{# eval.params.checked }}
+                       checked="{{eval.params.checked}}" {{/ eval.params.checked }}>
+            </div>
+        {{/DISPLAY_EVAL}}
+        {{#DISPLAY_EVAL_FROZEN}}
+            <input type="{{evalFrozen.params.type}}" name="{{evalFrozen.params.name}}"
+                   value="{{evalFrozen.params.value}}">
+        {{/DISPLAY_EVAL_FROZEN}}
+        {{#DISPLAY_EDIT_FULL}}
+            <div class="delete">
+                <input type="{{deleteButton.type}}" name="{{deleteButton.name}}" id="{{deleteButton.id}}"
+                       id="{{deleteButton.value}}">
+            </div>
+        {{/DISPLAY_EDIT_FULL}}
+    </div>
+</td>
+

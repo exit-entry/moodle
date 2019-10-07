@@ -25,11 +25,12 @@ Feature: Reuse my rubrics in other activities
       | Name | Assignment 1 rubric |
       | Description | Assignment 1 description |
     And I define the following rubric:
-      | Criterion 1 | Level 11 | 11 | Level 12 | 12 | Level 3 | 13 |
-      | Criterion 2 | Level 21 | 21 | Level 22 | 22 | Level 3 | 23 |
-      | Criterion 3 | Level 31 | 31 | Level 32 | 32 |         |    |
+      | Criterion 1 | Level 11 | 0 | Level 12 | 5 | Level 13 | 10 |
+      | Criterion 2 | Level 21 | 0 | Level 22 | 5 | Level 23 | 10 |
+      | Criterion 3 | Level 31 | 0 | Level 32 | 5 | Level 33 | 10 |
     And I press "Save rubric and make it ready"
     And I am on "Course 1" course homepage
+    And I wait "3" seconds
     When I add a "Assignment" to section "1" and I fill the form with:
       | Assignment name | Test assignment 2 name |
       | Description | Test assignment 2 description |

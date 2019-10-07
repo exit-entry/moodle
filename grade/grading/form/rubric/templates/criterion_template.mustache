@@ -1,0 +1,100 @@
+{{!
+  This file is part of Moodle - http://moodle.org/
+
+  Moodle is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  Moodle is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+  @template gradingform_rubric/criterion_template
+}}
+<tr class="criterion" id="{{row_id}}">
+    {{#DISPLAY_EDIT_FULL}}
+        <td class="controls">
+            {{#actions}}
+                <div class="{{class}}">
+                    <input type="submit" name="{{name}}" id="{{id}}" value="{{value}}">
+                </div>
+            {{/actions}}
+
+            {{#sortorder}}
+                <input type="hidden" name="{{name}}" value="{{value}}">
+            {{/sortorder}}
+        </td>
+        <td class="description">
+            {{#description}}
+                <div>
+                    <textarea name="{{name}}" id="{{id}}" cols="{{cols}}" rows="{{rows}}"
+                              aria-label="{{ariaLabel}}">{{content}}</textarea>
+                </div>
+            {{/description}}
+            {{#weight}}
+                <div class="{{criteria_class}}">
+                    <span id="{{wrap_id}}">
+                        <input type="{{type}}" name="{{name}}" id="{{id}}" aria-label="{{ariaLabel}}" value="{{value}}"
+                               size="{{size}}">
+                    </span>
+                    % weight
+                </div>
+            {{/weight}}
+        </td>
+    {{/DISPLAY_EDIT_FULL}}
+
+    {{^DISPLAY_EDIT_FULL}}
+        <td class="description">
+            {{#description}}
+                <div>
+                    {{content}}
+                </div>
+            {{/description}}
+            {{#weight}}
+                <div class="{{criteria_class}}">
+                    Weight {{value}}%
+                </div>
+            {{/weight}}
+        </td>
+    {{/DISPLAY_EDIT_FULL}}
+
+    {{#levels}}
+        <td class="{{class}}">
+            <table id="{{tableparams.id}}" aria-label="{{tableparams.ariaLabel}}">
+                <tr id="{{rowparams.id}}" aria-label="{{rowparams.ariaLabel}}">{{{rowparams.str}}}</tr>
+            </table>
+        </td>
+    {{/levels}}
+
+    {{#DISPLAY_EDIT_FULL}}
+        <td class="addlevel">
+            <input type="submit" id="{{levels.addLevels.submit.id}}"
+                   name="{{levels.addLevels.submit.name}}"
+                   value="{{levels.addLevels.submit.value}}">
+        </td>
+    {{/DISPLAY_EDIT_FULL}}
+
+    {{#remarkinfo.DISPLAY_EVAL}}
+        <td class="remark">
+            <textarea name="{{remarkinfo.name}}" id="{{remarkinfo.id}}" cols="{{remarkinfo.cols}}"
+                      rows="{{remarkinfo.rows}}" aria-label="{{remarkinfo.ariaLabel}}">{{remarkinfo.remark}}</textarea>
+        </td>
+    {{/remarkinfo.DISPLAY_EVAL}}
+
+    {{#remarkinfo.DISPLAY_EVAL_FROZEN}}
+        <input type="hidden" name="{{remarkinfo.name}}" value="{{remarkinfo.value}}">
+    {{/remarkinfo.DISPLAY_EVAL_FROZEN}}
+
+    {{#remarkinfo.DISPLAY_VIEW}}
+        <td id="{{remarkinfo.id}}" class="{{remarkinfo.class}}" tabindex="{{remarkinfo.tabindex}}"
+            aria-label="{{remarkinfo.ariaLabel}}">
+            {{remarkinfo.remark}}
+        </td>
+    {{/remarkinfo.DISPLAY_VIEW}}
+</tr>

@@ -54,134 +54,164 @@ class gradingform_rubric_renderer extends plugin_renderer_base {
      * @param array|null $criterion criterion data
      * @param string $levelsstr evaluated templates for this criterion levels
      * @param array|null $value (only in view mode) teacher's feedback on this criterion
+     * @throws coding_exception
      * @return string
      */
     public function criterion_template($mode, $options, $elementname = '{NAME}', $criterion = null, $levelsstr = '{LEVELS}', $value = null) {
+        $data = new stdClass();
+        $sortorderButton = new stdClass();
+        $description = new stdClass();
+        $hiddenDescription = new stdClass();
+        $criteriaWeightObj = new stdClass();
+        $levels = new stdClass();
+        $remarkinfo = new stdClass();
+
         // TODO MDL-31235 description format, remark format
         if ($criterion === null || !is_array($criterion) || !array_key_exists('id', $criterion)) {
-            $criterion = array('id' => '{CRITERION-id}', 'description' => '{CRITERION-description}', 'sortorder' => '{CRITERION-sortorder}', 'class' => '{CRITERION-class}');
+            $criterion = [
+            'id' => '{CRITERION-id}',
+            'description' => '{CRITERION-description}',
+            'sortorder' => '{CRITERION-sortorder}',
+            'class' => '{CRITERION-class}',
+            'weight' => false,
+        ];
         } else {
-            foreach (array('sortorder', 'description', 'class') as $key) {
+            foreach (['sortorder', 'description', 'class', 'weight'] as $key) {
                 // set missing array elements to empty strings to avoid warnings
                 if (!array_key_exists($key, $criterion)) {
                     $criterion[$key] = '';
                 }
             }
         }
-        $criteriontemplate = html_writer::start_tag('tr', array('class' => 'criterion'. $criterion['class'], 'id' => '{NAME}-criteria-{CRITERION-id}'));
+
+        $data->row_id = '{NAME}-criteria-{CRITERION-id}';
+        $data->weight = $criterion['weight'];
+
+        $data->DISPLAY_EDIT_FULL = ($mode == gradingform_rubric_controller::DISPLAY_EDIT_FULL);
+
         if ($mode == gradingform_rubric_controller::DISPLAY_EDIT_FULL) {
-            $criteriontemplate .= html_writer::start_tag('td', array('class' => 'controls'));
+            $data->DISPLAY_EDIT_FULL = true;
             foreach (array('moveup', 'delete', 'movedown', 'duplicate') as $key) {
-                $value = get_string('criterion'.$key, 'gradingform_rubric');
-                $button = html_writer::empty_tag('input', array('type' => 'submit', 'name' => '{NAME}[criteria][{CRITERION-id}]['.$key.']',
-                    'id' => '{NAME}-criteria-{CRITERION-id}-'.$key, 'value' => $value));
-                $criteriontemplate .= html_writer::tag('div', $button, array('class' => $key));
-            }
-            $criteriontemplate .= html_writer::empty_tag('input', array('type' => 'hidden',
-                                                                        'name' => '{NAME}[criteria][{CRITERION-id}][sortorder]',
-                                                                        'value' => $criterion['sortorder']));
-            $criteriontemplate .= html_writer::end_tag('td'); // .controls
+                $buttonObj = new stdClass();
+                $value = get_string('criterion' . $key, 'gradingform_rubric');
+                $buttonObj->id = '{NAME}-criteria-{CRITERION-id}-' . $key;
+                $buttonObj->class = $key;
+                $buttonObj->name = '{NAME}[criteria][{CRITERION-id}][' . $key . ']';
+                $buttonObj->value = $value;
 
-            // Criterion description text area.
-            $descriptiontextareaparams = array(
-                'name' => '{NAME}[criteria][{CRITERION-id}][description]',
-                'id' => '{NAME}-criteria-{CRITERION-id}-description',
-                'aria-label' => get_string('criterion', 'gradingform_rubric', ''),
-                'cols' => '10', 'rows' => '5'
-            );
-            $description = html_writer::tag('textarea', s($criterion['description']), $descriptiontextareaparams);
+                $data->actions[] = $buttonObj;
+            }
+
+            $sortorderButton->name = '{NAME}[criteria][{CRITERION-id}][sortorder]';
+            $sortorderButton->value = $criterion['sortorder'];
+            $data->sortorder = $sortorderButton;
+
+            $description->name = '{NAME}[criteria][{CRITERION-id}][description]';
+            $description->id = '{NAME}-criteria-{CRITERION-id}-description';
+            $description->ariaLabel = get_string('criterion', 'gradingform_rubric', '');
+            $description->cols = '10';
+            $description->rows = '5';
+            $description->content = s($criterion['description']);
+
+            $criteriaWeightObj->name = '{NAME}[criteria][{CRITERION-id}][weight]';
+            $criteriaWeightObj->id = '{NAME}-criteria-{CRITERION-id}-weight';
+            $criteriaWeightObj->ariaLabel = 'Weight';
+            $criteriaWeightObj->type = 'text';
+            $criteriaWeightObj->value = $criterion['weight'] ? (int)$criterion['weight'] : 100;
+            $criteriaWeightObj->size = 3;
+            $criteriaWeightObj->wrap_id = '{NAME}-criteria-{CRITERION-id}-weightvalue';
+            $criteriaWeightObj->wrap_class = 'weightvalue';
+            $criteriaWeightObj->criteria_class = 'weight';
+
+            if (isset($level['error_weight'])) {
+                $criteriaWeightObj->criteria_class .= ' error';
+            }
         } else {
+            $data->DISPLAY_EDIT_FULL = false;
+            $description->content = s($criterion['description']);
+            $criteriaWeightObj->value = $criterion['weight'] ? (int)$criterion['weight'] : 100;
             if ($mode == gradingform_rubric_controller::DISPLAY_EDIT_FROZEN) {
-                $criteriontemplate .= html_writer::empty_tag('input', array('type' => 'hidden', 'name' => '{NAME}[criteria][{CRITERION-id}][sortorder]', 'value' => $criterion['sortorder']));
-                $criteriontemplate .= html_writer::empty_tag('input', array('type' => 'hidden', 'name' => '{NAME}[criteria][{CRITERION-id}][description]', 'value' => $criterion['description']));
+                $data->DISPLAY_EDIT_FROZEN = gradingform_rubric_controller::DISPLAY_EDIT_FROZEN;
+
+                $sortorderButton->name = '{NAME}[criteria][{CRITERION-id}][sortorder]';
+                $sortorderButton->value = $criterion['sortorder'];
+
+                $hiddenDescription->name = '{NAME}[criteria][{CRITERION-id}][description]';
+                $hiddenDescription->content = $criterion['description'];
             }
-            $description = s($criterion['description']);
-        }
-        $descriptionclass = 'description';
-        if (isset($criterion['error_description'])) {
-            $descriptionclass .= ' error';
         }
 
-        // Description cell params.
-        $descriptiontdparams = array(
-            'class' => $descriptionclass,
-            'id' => '{NAME}-criteria-{CRITERION-id}-description-cell'
-        );
-        if ($mode != gradingform_rubric_controller::DISPLAY_EDIT_FULL &&
-            $mode != gradingform_rubric_controller::DISPLAY_EDIT_FROZEN) {
-            // Set description's cell as tab-focusable.
-            $descriptiontdparams['tabindex'] = '0';
-            // Set label for the criterion cell.
-            $descriptiontdparams['aria-label'] = get_string('criterion', 'gradingform_rubric', s($criterion['description']));
-        }
+        $levels->class = 'levels';
+        $levels->tableparams->id = '{NAME}-criteria-{CRITERION-id}-levels-table';
+        $levels->tableparams->ariaLabel = get_string('levelsgroup', 'gradingform_rubric');
 
-        // Description cell.
-        $criteriontemplate .= html_writer::tag('td', $description, $descriptiontdparams);
-
-        // Levels table.
-        $levelsrowparams = array('id' => '{NAME}-criteria-{CRITERION-id}-levels');
+        $levels->rowparams->id = '{NAME}-criteria-{CRITERION-id}-levels';
+        $levels->rowparams->str = $levelsstr;
         if ($mode != gradingform_rubric_controller::DISPLAY_EDIT_FULL) {
-            $levelsrowparams['role'] = 'radiogroup';
+            $levels->rowparams->role = 'radiogroup';
         }
-        $levelsrow = html_writer::tag('tr', $levelsstr, $levelsrowparams);
 
-        $levelstableparams = array(
-            'id' => '{NAME}-criteria-{CRITERION-id}-levels-table',
-            'aria-label' => get_string('levelsgroup', 'gradingform_rubric')
-        );
-        $levelsstrtable = html_writer::tag('table', $levelsrow, $levelstableparams);
-        $levelsclass = 'levels';
         if (isset($criterion['error_levels'])) {
-            $levelsclass .= ' error';
+            $levels->class .= ' error';
         }
-        $criteriontemplate .= html_writer::tag('td', $levelsstrtable, array('class' => $levelsclass));
+
         if ($mode == gradingform_rubric_controller::DISPLAY_EDIT_FULL) {
-            $value = get_string('criterionaddlevel', 'gradingform_rubric');
-            $button = html_writer::empty_tag('input', array('type' => 'submit', 'name' => '{NAME}[criteria][{CRITERION-id}][levels][addlevel]',
-                'id' => '{NAME}-criteria-{CRITERION-id}-levels-addlevel', 'value' => $value));
-            $criteriontemplate .= html_writer::tag('td', $button, array('class' => 'addlevel'));
+            $levels->addLevels->submit->name = '{NAME}[criteria][{CRITERION-id}][levels][addlevel]';
+            $levels->addLevels->submit->id = '{NAME}-criteria-{CRITERION-id}-levels-addlevel';
+            $levels->addLevels->submit->value = get_string('criterionaddlevel', 'gradingform_rubric');
         }
+
         $displayremark = ($options['enableremarks'] && ($mode != gradingform_rubric_controller::DISPLAY_VIEW || $options['showremarksstudent']));
+
         if ($displayremark) {
             $currentremark = '';
             if (isset($value['remark'])) {
                 $currentremark = $value['remark'];
             }
 
-            // Label for criterion remark.
-            $remarkinfo = new stdClass();
             $remarkinfo->description = s($criterion['description']);
             $remarkinfo->remark = $currentremark;
             $remarklabeltext = get_string('criterionremark', 'gradingform_rubric', $remarkinfo);
 
             if ($mode == gradingform_rubric_controller::DISPLAY_EVAL) {
-                // HTML parameters for remarks text area.
-                $remarkparams = array(
-                    'name' => '{NAME}[criteria][{CRITERION-id}][remark]',
-                    'id' => '{NAME}-criteria-{CRITERION-id}-remark',
-                    'cols' => '10', 'rows' => '5',
-                    'aria-label' => $remarklabeltext
-                );
-                $input = html_writer::tag('textarea', s($currentremark), $remarkparams);
-                $criteriontemplate .= html_writer::tag('td', $input, array('class' => 'remark'));
+                $remarkinfo->DISPLAY_EVAL = true;
+                $remarkinfo->name = '{NAME}[criteria][{CRITERION-id}][remark]';
+                $remarkinfo->id = '{NAME}-criteria-{CRITERION-id}-remark';
+                $remarkinfo->cols = '10';
+                $remarkinfo->rows = '5';
+                $remarkinfo->ariaLabel = $remarklabeltext;
+                $remarkinfo->remark = s($currentremark);
+
             } else if ($mode == gradingform_rubric_controller::DISPLAY_EVAL_FROZEN) {
-                $criteriontemplate .= html_writer::empty_tag('input', array('type' => 'hidden', 'name' => '{NAME}[criteria][{CRITERION-id}][remark]', 'value' => $currentremark));
-            }else if ($mode == gradingform_rubric_controller::DISPLAY_REVIEW || $mode == gradingform_rubric_controller::DISPLAY_VIEW) {
-                // HTML parameters for remarks cell.
-                $remarkparams = array(
-                    'class' => 'remark',
-                    'tabindex' => '0',
-                    'id' => '{NAME}-criteria-{CRITERION-id}-remark',
-                    'aria-label' => $remarklabeltext
-                );
-                $criteriontemplate .= html_writer::tag('td', s($currentremark), $remarkparams);
+                $remarkinfo->DISPLAY_EVAL_FROZEN = true;
+                $remarkinfo->name = '{NAME}[criteria][{CRITERION-id}][remark]';
+                $remarkinfo->value = $currentremark;
+            } else if ($mode == gradingform_rubric_controller::DISPLAY_REVIEW || $mode == gradingform_rubric_controller::DISPLAY_VIEW) {
+                $remarkinfo->DISPLAY_VIEW = true;
+                $remarkinfo->remark = $currentremark;
+                $remarkinfo->class = 'remark';
+                $remarkinfo->tabindex = '0';
+                $remarkinfo->id = '{NAME}-criteria-{CRITERION-id}-remark';
+                $remarkinfo->ariaLabel = $remarklabeltext;
             }
         }
-        $criteriontemplate .= html_writer::end_tag('tr'); // .criterion
+        $data->weight = $criteriaWeightObj;
+        $data->hiddenDescription = $hiddenDescription;
+        $data->description = $description;
+        $data->sortorder = $sortorderButton;
+        $data->levels = $levels;
+        $data->remarkinfo = $remarkinfo;
 
-        $criteriontemplate = str_replace('{NAME}', $elementname, $criteriontemplate);
-        $criteriontemplate = str_replace('{CRITERION-id}', $criterion['id'], $criteriontemplate);
-        return $criteriontemplate;
+        try {
+            $html = parent::render_from_template('gradingform_rubric/criterion_template', $data);
+        } catch (Exception $exception) {
+            $html = '';
+        }
+
+        $html = str_replace('{NAME}', $elementname, $html);
+        $html = str_replace('{CRITERION-id}', $criterion['id'], $html);
+
+        return $html;
     }
 
     /**
@@ -205,8 +235,11 @@ class gradingform_rubric_renderer extends plugin_renderer_base {
      * @param string|int $criterionid either id of the nesting criterion or a macro for template
      * @param array|null $level level data, also in view mode it might also have property $level['checked'] whether this level is checked
      * @return string
+     * @throws coding_exception
      */
     public function level_template($mode, $options, $elementname = '{NAME}', $criterionid = '{CRITERION-id}', $level = null) {
+        $data = new stdClass();
+
         // TODO MDL-31235 definition format
         if (!isset($level['id'])) {
             $level = array('id' => '{LEVEL-id}', 'definition' => '{LEVEL-definition}', 'score' => '{LEVEL-score}', 'class' => '{LEVEL-class}', 'checked' => false);
@@ -231,34 +264,41 @@ class gradingform_rubric_renderer extends plugin_renderer_base {
             $tdattributes['width'] = round($level['tdwidth']).'%';
         }
 
-        $leveltemplate = html_writer::start_tag('div', array('class' => 'level-wrapper'));
+        $levelWrapper = array('class' => 'level-wrapper');
+        $data->levelWrapper = (object)$levelWrapper;
+
         if ($mode == gradingform_rubric_controller::DISPLAY_EDIT_FULL) {
             $definitionparams = array(
                 'id' => '{NAME}-criteria-{CRITERION-id}-levels-{LEVEL-id}-definition',
                 'name' => '{NAME}[criteria][{CRITERION-id}][levels][{LEVEL-id}][definition]',
-                'aria-label' => get_string('leveldefinition', 'gradingform_rubric', $levelindex),
-                'cols' => '10', 'rows' => '4'
+                'ariaLabel' => get_string('leveldefinition', 'gradingform_rubric', $levelindex),
+                'cols' => '10', 'rows' => '4',
+                'value' => s($level['definition'])
             );
-            $definition = html_writer::tag('textarea', s($level['definition']), $definitionparams);
+            $data->definition->params = (object)$definitionparams;
 
             $scoreparams = array(
                 'type' => 'text',
                 'id' => '{NAME}[criteria][{CRITERION-id}][levels][{LEVEL-id}][score]',
                 'name' => '{NAME}[criteria][{CRITERION-id}][levels][{LEVEL-id}][score]',
-                'aria-label' => get_string('scoreinputforlevel', 'gradingform_rubric', $levelindex),
+                'ariaLabel' => get_string('scoreinputforlevel', 'gradingform_rubric', $levelindex),
                 'size' => '3',
-                'value' => $level['score']
+                'value' => $level['score'],
             );
-            $score = html_writer::empty_tag('input', $scoreparams);
+            $data->score->params = (object)$scoreparams;
         } else {
             if ($mode == gradingform_rubric_controller::DISPLAY_EDIT_FROZEN) {
-                $leveltemplate .= html_writer::empty_tag('input', array('type' => 'hidden', 'name' => '{NAME}[criteria][{CRITERION-id}][levels][{LEVEL-id}][definition]', 'value' => $level['definition']));
-                $leveltemplate .= html_writer::empty_tag('input', array('type' => 'hidden', 'name' => '{NAME}[criteria][{CRITERION-id}][levels][{LEVEL-id}][score]', 'value' => $level['score']));
+                $data->DISPLAY_EDIT_FROZEN = true;
+                $frozenDefinition = array('type' => 'hidden', 'name' => '{NAME}[criteria][{CRITERION-id}][levels][{LEVEL-id}][definition]', 'value' => $level['definition']);
+                $data->frozenDefinition = (object)$frozenDefinition;
+                $frozenScore = array('type' => 'hidden', 'name' => '{NAME}[criteria][{CRITERION-id}][levels][{LEVEL-id}][score]', 'value' => $level['score']);
+                $data->frozenScore = (object)$frozenScore;
             }
-            $definition = s($level['definition']);
-            $score = $level['score'];
+            $data->definition->params->value = s($level['definition']);
+            $data->score->params->value = $level['score'];
         }
         if ($mode == gradingform_rubric_controller::DISPLAY_EVAL) {
+            $data->DISPLAY_EVAL = true;
             $levelradioparams = array(
                 'type' => 'radio',
                 'id' => '{NAME}-criteria-{CRITERION-id}-levels-{LEVEL-id}-definition',
@@ -268,19 +308,22 @@ class gradingform_rubric_renderer extends plugin_renderer_base {
             if ($level['checked']) {
                 $levelradioparams['checked'] = 'checked';
             }
-            $input = html_writer::empty_tag('input', $levelradioparams);
-            $leveltemplate .= html_writer::div($input, 'radio');
+
+            $data->eval->params = (object)$levelradioparams;
         }
         if ($mode == gradingform_rubric_controller::DISPLAY_EVAL_FROZEN && $level['checked']) {
-            $leveltemplate .= html_writer::empty_tag('input',
-                array(
-                    'type' => 'hidden',
-                    'name' => '{NAME}[criteria][{CRITERION-id}][levelid]',
-                    'value' => $level['id']
-                )
+            $data->DISPLAY_EVAL_FROZEN = true;
+            $evalFrozenParams =  array(
+                'type' => 'hidden',
+                'name' => '{NAME}[criteria][{CRITERION-id}][levelid]',
+                'value' => $level['id']
             );
+            $data->evalFrozen->params = (object)$evalFrozenParams;
         }
-        $score = html_writer::tag('span', $score, array('id' => '{NAME}-criteria-{CRITERION-id}-levels-{LEVEL-id}-score', 'class' => 'scorevalue'));
+
+        $scoreArgs = array('id' => '{NAME}-criteria-{CRITERION-id}-levels-{LEVEL-id}-score', 'class' => 'scorevalue');
+        $data->score->paramSpan = (object)$scoreArgs;
+
         $definitionclass = 'definition';
         if (isset($level['error_definition'])) {
             $definitionclass .= ' error';
@@ -293,16 +336,16 @@ class gradingform_rubric_renderer extends plugin_renderer_base {
             $levelinfo = new stdClass();
             $levelinfo->definition = s($level['definition']);
             $levelinfo->score = $level['score'];
-            $tdattributes['aria-label'] = get_string('level', 'gradingform_rubric', $levelinfo);
+            $tdattributes['ariaLabel'] = get_string('level', 'gradingform_rubric', $levelinfo);
 
             if ($mode != gradingform_rubric_controller::DISPLAY_PREVIEW &&
                 $mode != gradingform_rubric_controller::DISPLAY_PREVIEW_GRADED) {
                 // Add role of radio button to level cell if not in edit and preview mode.
                 $tdattributes['role'] = 'radio';
                 if ($level['checked']) {
-                    $tdattributes['aria-checked'] = 'true';
+                    $tdattributes['ariaChecked'] = 'true';
                 } else {
-                    $tdattributes['aria-checked'] = 'false';
+                    $tdattributes['ariaChecked'] = 'false';
                 }
             }
         }
@@ -310,22 +353,30 @@ class gradingform_rubric_renderer extends plugin_renderer_base {
         $leveltemplateparams = array(
             'id' => '{NAME}-criteria-{CRITERION-id}-levels-{LEVEL-id}-definition-container'
         );
-        $leveltemplate .= html_writer::div($definition, $definitionclass, $leveltemplateparams);
+
+        $data->definition->class = $definitionclass;
+        $data->definition->leveltemplateparams = (object)$leveltemplateparams;
+
         $displayscore = true;
+
         if (!$options['showscoreteacher'] && in_array($mode, array(gradingform_rubric_controller::DISPLAY_EVAL, gradingform_rubric_controller::DISPLAY_EVAL_FROZEN, gradingform_rubric_controller::DISPLAY_REVIEW))) {
             $displayscore = false;
         }
         if (!$options['showscorestudent'] && in_array($mode, array(gradingform_rubric_controller::DISPLAY_VIEW, gradingform_rubric_controller::DISPLAY_PREVIEW_GRADED))) {
             $displayscore = false;
         }
+
+        $data->displayScore = $displayscore;
         if ($displayscore) {
             $scoreclass = 'score';
             if (isset($level['error_score'])) {
                 $scoreclass .= ' error';
             }
-            $leveltemplate .= html_writer::tag('div', get_string('scorepostfix', 'gradingform_rubric', $score), array('class' => $scoreclass));
+            $data->displayScoreData->value = get_string('scorepostfix', 'gradingform_rubric', $level['score']);
+            $data->displayScoreData->class = $scoreclass;
         }
         if ($mode == gradingform_rubric_controller::DISPLAY_EDIT_FULL) {
+            $data->DISPLAY_EDIT_FULL = true;
             $value = get_string('leveldelete', 'gradingform_rubric', $levelindex);
             $buttonparams = array(
                 'type' => 'submit',
@@ -333,17 +384,21 @@ class gradingform_rubric_renderer extends plugin_renderer_base {
                 'id' => '{NAME}-criteria-{CRITERION-id}-levels-{LEVEL-id}-delete',
                 'value' => $value
             );
-            $button = html_writer::empty_tag('input', $buttonparams);
-            $leveltemplate .= html_writer::tag('div', $button, array('class' => 'delete'));
+            $data->deleteButton = (object)$buttonparams;
         }
-        $leveltemplate .= html_writer::end_tag('div'); // .level-wrapper
 
-        $leveltemplate = html_writer::tag('td', $leveltemplate, $tdattributes); // The .level cell.
+        $data->tdAttributes = (object)$tdattributes;
 
-        $leveltemplate = str_replace('{NAME}', $elementname, $leveltemplate);
-        $leveltemplate = str_replace('{CRITERION-id}', $criterionid, $leveltemplate);
-        $leveltemplate = str_replace('{LEVEL-id}', $level['id'], $leveltemplate);
-        return $leveltemplate;
+        try {
+            $html = parent::render_from_template('gradingform_rubric/level_template', $data);
+        } catch (Exception $exception) {
+            $html = '';
+        }
+
+        $html = str_replace('{NAME}', $elementname, $html);
+        $html = str_replace('{CRITERION-id}', $criterionid, $html);
+        $html = str_replace('{LEVEL-id}', $level['id'], $html);
+        return $html;
     }
 
     /**
@@ -364,8 +419,10 @@ class gradingform_rubric_renderer extends plugin_renderer_base {
      * @param string $elementname the name of the form element (in editor mode) or the prefix for div ids (in view mode)
      * @param string $criteriastr evaluated templates for this rubric's criteria
      * @return string
+     * @throws coding_exception
      */
     protected function rubric_template($mode, $options, $elementname, $criteriastr) {
+        $data = new stdClass();
         $classsuffix = ''; // CSS suffix for class of the main div. Depends on the mode
         switch ($mode) {
             case gradingform_rubric_controller::DISPLAY_EDIT_FULL:
@@ -385,30 +442,30 @@ class gradingform_rubric_renderer extends plugin_renderer_base {
                 $classsuffix = ' view';  break;
         }
 
-        $rubrictemplate = html_writer::start_tag('div', array('id' => 'rubric-{NAME}', 'class' => 'clearfix gradingform_rubric'.$classsuffix));
+        $data->wrap_id = 'rubric-{NAME}';
+        $data->wrap_class = 'clearfix gradingform_rubric' . $classsuffix;
 
-        // Rubric table.
-        $rubrictableparams = array(
-            'class' => 'criteria',
-            'id' => '{NAME}-criteria',
-            'aria-label' => get_string('rubric', 'gradingform_rubric'));
-        $rubrictable = html_writer::tag('table', $criteriastr, $rubrictableparams);
-        $rubrictemplate .= $rubrictable;
+        $data->tableparams->class = 'criteria';
+        $data->tableparams->id = '{NAME}-criteria';
+        $data->tableparams->ariaLabel = get_string('rubric', 'gradingform_rubric');
+        $data->criteriastr = $criteriastr;
+
         if ($mode == gradingform_rubric_controller::DISPLAY_EDIT_FULL) {
+            $data->DISPLAY_EDIT_FULL = true;
             $value = get_string('addcriterion', 'gradingform_rubric');
-            $criteriainputparams = array(
-                'type' => 'submit',
-                'name' => '{NAME}[criteria][addcriterion]',
-                'id' => '{NAME}-criteria-addcriterion',
-                'value' => $value
-            );
-            $input = html_writer::empty_tag('input', $criteriainputparams);
-            $rubrictemplate .= html_writer::tag('div', $input, array('class' => 'addcriterion'));
+            $data->inputparams->name = '{NAME}[criteria][addcriterion]';
+            $data->inputparams->id = '{NAME}-criteria-addcriterion';
+            $data->inputparams->value = $value;
         }
-        $rubrictemplate .= $this->rubric_edit_options($mode, $options);
-        $rubrictemplate .= html_writer::end_tag('div');
+        $data->edit_options = $this->rubric_edit_options($mode, $options);
 
-        return str_replace('{NAME}', $elementname, $rubrictemplate);
+        try {
+            $html = parent::render_from_template('gradingform_rubric/rubric_template', $data);
+        } catch (Exception $exception) {
+            $html = '';
+        }
+
+        return str_replace('{NAME}', $elementname, $html);
     }
 
     /**
@@ -418,6 +475,7 @@ class gradingform_rubric_renderer extends plugin_renderer_base {
      * @param int $mode rubric display mode see {@link gradingform_rubric_controller}
      * @param array $options display options for this rubric, defaults are: {@link gradingform_rubric_controller::get_default_options()}
      * @return string
+     * @throws coding_exception
      */
     protected function rubric_edit_options($mode, $options) {
         if ($mode != gradingform_rubric_controller::DISPLAY_EDIT_FULL
@@ -426,56 +484,92 @@ class gradingform_rubric_renderer extends plugin_renderer_base {
             // Options are displayed only for people who can manage
             return;
         }
-        $html = html_writer::start_tag('div', array('class' => 'options'));
-        $html .= html_writer::tag('div', get_string('rubricoptions', 'gradingform_rubric'), array('class' => 'optionsheading'));
-        $attrs = array('type' => 'hidden', 'name' => '{NAME}[options][optionsset]', 'value' => 1);
+
+        $data = new stdClass();
+
+        $data->optionsheading->title = get_string('rubricoptions', 'gradingform_rubric');
+        $data->optionsheading->class = 'optionsheading';
+        $data->optionsset->name = '{NAME}[options][optionsset]';
+        $data->optionsset->value = 1;
+
+
         foreach ($options as $option => $value) {
-            $html .= html_writer::start_tag('div', array('class' => 'option '.$option));
-            $attrs = array('name' => '{NAME}[options]['.$option.']', 'id' => '{NAME}-options-'.$option);
+            $optionObj = new stdClass();
+            $optionObj->class = 'option '. $option;
+            $optionObj->attrs->name = '{NAME}[options][' . $option . ']';
+            $optionObj->attrs->type = 'hidden';
+            $optionObj->attrs->id = '{NAME}-options-'.$option;
+
             switch ($option) {
                 case 'sortlevelsasc':
                     // Display option as dropdown
-                    $html .= html_writer::label(get_string($option, 'gradingform_rubric'), $attrs['id'], false, array('class' => 'label'));
-                    $value = (int)(!!$value); // make sure $value is either 0 or 1
+                    $optionObj->is_sortlevelsasc = true;
+                    $optionObj->sortlevelsasc->label->text = get_string($option, 'gradingform_rubric');
+                    $optionObj->sortlevelsasc->label->for = $optionObj->attrs->id;
+
+                    $value = (int)(!!$value);
                     if ($mode == gradingform_rubric_controller::DISPLAY_EDIT_FULL) {
-                        $selectoptions = array(0 => get_string($option.'0', 'gradingform_rubric'), 1 => get_string($option.'1', 'gradingform_rubric'));
-                        $valuestr = html_writer::select($selectoptions, $attrs['name'], $value, false, array('id' => $attrs['id']));
-                        $html .= html_writer::tag('span', $valuestr, array('class' => 'value'));
+                        $optionObj->sortlevelsasc->DISPLAY_EDIT_FULL = true;
+                        $optionObj->sortlevelsasc->select->id = $optionObj->attrs->id;
+                        $optionObj->sortlevelsasc->select->name = $optionObj->attrs->name;
+                        $optionObj->sortlevelsasc->select->class = 'select custom-select menurubricoptionssortlevelsasc';
+                        for ($i = 0; $i <= 1; $i++) {
+                            $temoObj = new stdClass();
+                            $temoObj->selected = ($value == $i);
+                            $temoObj->value = $i;
+                            $temoObj->dispaly = get_string($option . $i, 'gradingform_rubric');
+                            $optionObj->sortlevelsasc->select->options[] = $temoObj;
+                        }
                     } else {
-                        $html .= html_writer::tag('span', get_string($option.$value, 'gradingform_rubric'), array('class' => 'value'));
+                        $optionObj->sortlevelsasc->DISPLAY_EDIT_FULL = false;
+                        $optionObj->sortlevelsasc->spanText = get_string($option.$value, 'gradingform_rubric');
                         if ($mode == gradingform_rubric_controller::DISPLAY_EDIT_FROZEN) {
-                            $html .= html_writer::empty_tag('input', $attrs + array('type' => 'hidden', 'value' => $value));
+                            $optionObj->sortlevelsasc->DISPLAY_EDIT_FROZEN = true;
+                            $optionObj->sortlevelsasc->hiddenField = $optionObj->attrs;
+                            $optionObj->sortlevelsasc->hiddenField->value = $value;
                         }
                     }
                     break;
                 default:
+                    $optionObj->default_option->enabled = true;
+                    $optionObj->default_option->attrs = $optionObj->attrs;
                     if ($mode == gradingform_rubric_controller::DISPLAY_EDIT_FROZEN && $value) {
+                        $optionObj->default_option->DISPLAY_EDIT_FROZEN = true;
                         // Id should be different then the actual input added later.
-                        $attrs['id'] .= '_hidden';
-                        $html .= html_writer::empty_tag('input', $attrs + array('type' => 'hidden', 'value' => $value));
+                        $optionObj->default_option->attrs->id = '_hidden';
+                        $optionObj->default_option->attrs->value = $value;
                     }
+
                     // Display option as checkbox
-                    $attrs['type'] = 'checkbox';
-                    $attrs['value'] = 1;
+                    $optionObj->default_option->attrs->type = 'checkbox';
+                    $optionObj->default_option->attrs->value = 1;
                     if ($value) {
-                        $attrs['checked'] = 'checked';
+                        $optionObj->default_option->attrs->checked = 'checked';
                     }
+
                     if ($mode == gradingform_rubric_controller::DISPLAY_EDIT_FROZEN || $mode == gradingform_rubric_controller::DISPLAY_PREVIEW) {
-                        $attrs['disabled'] = 'disabled';
-                        unset($attrs['name']);
+                        $optionObj->default_option->attrs->disabled = 'disabled';
+                        unset($optionObj->default_option->attrs->name);
                         // Id should be different then the actual input added later.
-                        $attrs['id'] .= '_disabled';
+                        $optionObj->default_option->attrs->id .= '_disabled';
                     }
-                    $html .= html_writer::empty_tag('input', $attrs);
-                    $html .= html_writer::tag('label', get_string($option, 'gradingform_rubric'), array('for' => $attrs['id']));
+                    $optionObj->default_option->attrs->labelString = get_string($option, 'gradingform_rubric');
                     break;
             }
+
             if (get_string_manager()->string_exists($option.'_help', 'gradingform_rubric')) {
-                $html .= $this->help_icon($option, 'gradingform_rubric');
+                $optionObj->iconHtml = $this->help_icon($option, 'gradingform_rubric');
             }
-            $html .= html_writer::end_tag('div'); // .option
+
+            $data->options[] = $optionObj;
         }
-        $html .= html_writer::end_tag('div'); // .options
+
+        try {
+            $html = parent::render_from_template('gradingform_rubric/rubric_edit_options', $data);
+        } catch (Exception $exception) {
+            $html = '';
+        }
+
         return $html;
     }
 
@@ -494,6 +588,7 @@ class gradingform_rubric_renderer extends plugin_renderer_base {
      * @param string $elementname the name of the form element (in editor mode) or the prefix for div ids (in view mode)
      * @param array $values evaluation result
      * @return string
+     * @throws coding_exception
      */
     public function display_rubric($criteria, $options, $mode, $elementname = null, $values = null) {
         $criteriastr = '';
@@ -560,18 +655,28 @@ class gradingform_rubric_renderer extends plugin_renderer_base {
      * @param string $defaultcontent default string that would be displayed without advanced grading
      * @param boolean $cangrade whether current user has capability to grade in this context
      * @return string
+     * @throws coding_exception
      */
     public function display_instances($instances, $defaultcontent, $cangrade) {
-        $return = '';
+        $data = new stdClass();
+        $html = '';
+
         if (sizeof($instances)) {
-            $return .= html_writer::start_tag('div', array('class' => 'advancedgrade'));
+            $data->wrap_class = 'advancedgrade';
             $idx = 0;
+
             foreach ($instances as $instance) {
-                $return .= $this->display_instance($instance, $idx++, $cangrade);
+                $data->instance = $this->display_instance($instance, $idx++, $cangrade);
             }
-            $return .= html_writer::end_tag('div');
+
+            try {
+                $html = parent::render_from_template('gradingform_rubric/display_instances', $data);
+            } catch (Exception $exception) {
+                $html = '';
+            }
         }
-        return $return. $defaultcontent;
+
+        return $html . $defaultcontent;
     }
 
     /**
@@ -580,6 +685,8 @@ class gradingform_rubric_renderer extends plugin_renderer_base {
      * @param gradingform_rubric_instance $instance
      * @param int $idx unique number of instance on page
      * @param bool $cangrade whether current user has capability to grade in this context
+     * @return string
+     * @throws coding_exception
      */
     public function display_instance(gradingform_rubric_instance $instance, $idx, $cangrade) {
         $criteria = $instance->get_controller()->get_definition()->rubric_criteria;
@@ -607,21 +714,38 @@ class gradingform_rubric_renderer extends plugin_renderer_base {
      * @param int $changelevel
      * @param string $value
      * @return string
+     * @throws coding_exception
      */
     public function display_regrade_confirmation($elementname, $changelevel, $value) {
-        $html = html_writer::start_tag('div', array('class' => 'gradingform_rubric-regrade', 'role' => 'alert'));
-        if ($changelevel<=2) {
-            $html .= html_writer::label(get_string('regrademessage1', 'gradingform_rubric'), 'menu' . $elementname . 'regrade');
-            $selectoptions = array(
-                0 => get_string('regradeoption0', 'gradingform_rubric'),
-                1 => get_string('regradeoption1', 'gradingform_rubric')
-            );
-            $html .= html_writer::select($selectoptions, $elementname.'[regrade]', $value, false);
+        $data = new stdClass();
+
+        if ($changelevel <= 2) {
+            $data->changeLevelLess2 = true;
+            $data->label->title = get_string('regrademessage1', 'gradingform_rubric');
+            $data->label->for = 'menu' . $elementname . 'regrade';
+
+            $data->select->name =  $elementname.'[regrade]';
+            $data->select->value = $value;
+            $data->select->options = [];
+
+            for ($i = 0; $i <= 1; $i++) {
+                $temoObj = new stdClass();
+                $temoObj->selected = ($value == $i);
+                $temoObj->value = $i;
+                $temoObj->dispaly = get_string('regradeoption'.$i, 'gradingform_rubric');
+                $data->select->options[] = $temoObj;
+            }
         } else {
-            $html .= get_string('regrademessage5', 'gradingform_rubric');
-            $html .= html_writer::empty_tag('input', array('name' => $elementname.'[regrade]', 'value' => 1, 'type' => 'hidden'));
+            $data->changeLevelLess2 = false;
+            $data->regrade->text = get_string('regrademessage5', 'gradingform_rubric');
+            $data->regrade->name = $elementname.'[regrade]';
         }
-        $html .= html_writer::end_tag('div');
+
+        try {
+            $html = parent::render_from_template('gradingform_rubric/display_regrade_confirmation', $data);
+        } catch (Exception $exception) {
+            $html = '';
+        }
         return $html;
     }
 
@@ -630,6 +754,7 @@ class gradingform_rubric_renderer extends plugin_renderer_base {
      *
      * @param array $scores
      * @return string
+     * @throws coding_exception
      */
     public function display_rubric_mapping_explained($scores) {
         $html = '';

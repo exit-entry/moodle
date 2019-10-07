@@ -99,7 +99,7 @@ class behat_gradingform_rubric extends behat_base {
             foreach ($criteria as $criterionit => $criterion) {
                 // Unset empty levels in criterion.
                 foreach ($criterion as $i => $value) {
-                    if (empty($value)) {
+                    if (is_null($value)) {
                         unset($criterion[$i]);
                     }
                 }
@@ -107,7 +107,7 @@ class behat_gradingform_rubric extends behat_base {
                 // Remove empty criterion, as TableNode might contain them to make table rows equal size.
                 $newcriterion = array();
                 foreach ($criterion as $k => $c) {
-                    if (!empty($c)) {
+                    if (!empty($c) || is_numeric($c)) {
                         $newcriterion[$k] = $c;
                     }
                 }

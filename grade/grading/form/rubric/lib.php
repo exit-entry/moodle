@@ -159,7 +159,7 @@ class gradingform_rubric_controller extends gradingform_controller {
             $newcriteria = $newdefinition->rubric['criteria']; // new ones to be saved
         }
         $currentcriteria = $currentdefinition->rubric_criteria;
-        $criteriafields = array('sortorder', 'description', 'descriptionformat');
+        $criteriafields = array('sortorder', 'description', 'descriptionformat', 'weight');
         $levelfields = array('score', 'definition', 'definitionformat');
         foreach ($newcriteria as $id => $criterion) {
             // get list of submitted levels
@@ -303,7 +303,7 @@ class gradingform_rubric_controller extends gradingform_controller {
     protected function load_definition() {
         global $DB;
         $sql = "SELECT gd.*,
-                       rc.id AS rcid, rc.sortorder AS rcsortorder, rc.description AS rcdescription, rc.descriptionformat AS rcdescriptionformat,
+                       rc.id AS rcid, rc.weight AS rcweight, rc.sortorder AS rcsortorder, rc.description AS rcdescription, rc.descriptionformat AS rcdescriptionformat,
                        rl.id AS rlid, rl.score AS rlscore, rl.definition AS rldefinition, rl.definitionformat AS rldefinitionformat
                   FROM {grading_definitions} gd
              LEFT JOIN {gradingform_rubric_criteria} rc ON (rc.definitionid = gd.id)
@@ -326,7 +326,7 @@ class gradingform_rubric_controller extends gradingform_controller {
             }
             // pick the criterion data
             if (!empty($record->rcid) and empty($this->definition->rubric_criteria[$record->rcid])) {
-                foreach (array('id', 'sortorder', 'description', 'descriptionformat') as $fieldname) {
+                foreach (['id', 'sortorder', 'description', 'descriptionformat', 'weight'] as $fieldname) {
                     $this->definition->rubric_criteria[$record->rcid][$fieldname] = $record->{'rc'.$fieldname};
                 }
                 $this->definition->rubric_criteria[$record->rcid]['levels'] = array();

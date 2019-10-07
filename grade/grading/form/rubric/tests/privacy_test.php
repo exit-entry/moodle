@@ -51,12 +51,12 @@ class gradingform_rubric_privacy_testcase extends provider_testcase {
 
         $modulecontext = context_module::instance($module->cmid);
         $rubric = new test_rubric($modulecontext, 'testrubrib', 'Description text');
-        $criterion = new test_criterion('Spelling is important');
+        $criterion = new test_criterion('Spelling is important', 40);
         $criterion->add_level('Nothing but mistakes', 0);
         $criterion->add_level('Several mistakes', 1);
         $criterion->add_level('No mistakes', 2);
         $rubric->add_criteria($criterion);
-        $criterion = new test_criterion('Pictures');
+        $criterion = new test_criterion('Pictures', 60);
         $criterion->add_level('No pictures', 0);
         $criterion->add_level('One picture', 1);
         $criterion->add_level('More than one picture', 2);
@@ -111,12 +111,12 @@ class gradingform_rubric_privacy_testcase extends provider_testcase {
 
         $modulecontext = context_module::instance($module->cmid);
         $rubric = new test_rubric($modulecontext, 'testrubrib', 'Description text');
-        $criterion = new test_criterion('Spelling is important');
+        $criterion = new test_criterion('Spelling is important', 40);
         $criterion->add_level('Nothing but mistakes', 0);
         $criterion->add_level('Several mistakes', 1);
         $criterion->add_level('No mistakes', 2);
         $rubric->add_criteria($criterion);
-        $criterion = new test_criterion('Pictures');
+        $criterion = new test_criterion('Pictures', 60);
         $criterion->add_level('No pictures', 0);
         $criterion->add_level('One picture', 1);
         $criterion->add_level('More than one picture', 2);
@@ -264,6 +264,7 @@ class test_rubric {
         $this->criterionid++;
         $this->criteria['NEWID' . $this->criterionid] = [
             'description' => $criterion->description,
+            'weight' => $criterion->weight,
             'sortorder' => $this->criterionid,
             'levels' => $criterion->levels
         ];
@@ -287,14 +288,17 @@ class test_criterion {
     public $levelid = 0;
     /** @var array $levels The levels for this criterion. */
     public $levels = [];
+    /** @var null|number $weight A weight of the criterion. */
+    public $weight = null;
 
     /**
      * Constructor for this test_criterion object
      *
      * @param string $description A description of this criterion.
      */
-    public function __construct($description) {
+    public function __construct($description, $weight) {
         $this->description = $description;
+        $this->weight = $weight;
     }
 
     /**

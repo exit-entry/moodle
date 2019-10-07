@@ -117,9 +117,21 @@ class MoodleQuickForm_rubriceditor extends HTML_QuickForm_input {
             $mode = gradingform_rubric_controller::DISPLAY_EDIT_FULL;
             $module = array('name'=>'gradingform_rubriceditor', 'fullpath'=>'/grade/grading/form/rubric/js/rubriceditor.js',
                 'requires' => array('base', 'dom', 'event', 'event-touch', 'escape'),
-                'strings' => array(array('confirmdeletecriterion', 'gradingform_rubric'), array('confirmdeletelevel', 'gradingform_rubric'),
-                    array('criterionempty', 'gradingform_rubric'), array('levelempty', 'gradingform_rubric')
-                ));
+                'strings' => [
+                    ['confirmdeletecriterion', 'gradingform_rubric'],
+                    ['confirmdeletelevel', 'gradingform_rubric'],
+                    ['criterionempty', 'gradingform_rubric'],
+                    ['levelempty', 'gradingform_rubric'],
+                    ['ruleweightsum100', 'gradingform_rubric'],
+                    ['rulescorecannotbelessthan0', 'gradingform_rubric'],
+                    ['rulescorecannotbegreaterthan10', 'gradingform_rubric'],
+                    ['ruleallcriteriascore0points', 'gradingform_rubric'],
+                    ['ruleallcriteriascore10points', 'gradingform_rubric'],
+                    ['rulescoreascendingordering', 'gradingform_rubric'],
+                    ['rulescorestartswith0points', 'gradingform_rubric'],
+                    ['rulescoreendsswith10points', 'gradingform_rubric'],
+                    ['rulesamelevelcount', 'gradingform_rubric'],
+                ]);
             $PAGE->requires->js_init_call('M.gradingform_rubriceditor.init', array(
                 array('name' => $this->getName(),
                     'criteriontemplate' => $renderer->criterion_template($mode, $data['options'], $this->getName()),

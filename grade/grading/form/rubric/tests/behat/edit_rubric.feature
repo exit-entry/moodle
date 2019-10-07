@@ -29,92 +29,87 @@ Feature: Rubrics can be created and edited
       | Name | Assignment 1 rubric |
       | Description | Rubric test description |
     And I define the following rubric:
-      | TMP Criterion 1 | TMP Level 11 | 11 | TMP Level 12 | 12 |
-      | TMP Criterion 2 | TMP Level 21 | 21 | TMP Level 22 | 22 |
-      | TMP Criterion 3 | TMP Level 31 | 31 | TMP Level 32 | 32 |
-      | TMP Criterion 4 | TMP Level 41 | 41 | TMP Level 42 | 42 |
-    # Checking that only the last ones are saved.
-    And I define the following rubric:
-      | Criterion 1 | Level 11 | 1  | Level 12 | 20 | Level 13 | 40 | Level 14  | 50  |
-      | Criterion 2 | Level 21 | 10 | Level 22 | 20 | Level 23 | 30 |           |     |
-      | Criterion 3 | Level 31 | 5  | Level 32 | 20 |          |    |           |     |
-    And I press "Save as draft"
-    And I go to "Test assignment 1 name" advanced grading definition page
-    And I click on "Move down" "button" in the "Criterion 1" "table_row"
+      | Criterion 1 | Level 11 | 0 | Level 12 | 5 | Level 13 | 10 |
+      | Criterion 2 | Level 21 | 0 | Level 22 | 5 | Level 23 | 10 |
+      | Criterion 3 | Level 31 | 0 | Level 32 | 5 | Level 33 | 10 |
     And I press "Save rubric and make it ready"
-    Then I should see "Ready for use"
-    # Grading two students.
+    And I am on "Course 1" course homepage
+    And I wait "3" seconds
+    # Grading а student.
     And I go to "Student 1" "Test assignment 1 name" activity advanced grading page
     And I grade by filling the rubric with:
-      | Criterion 1 | 50 | Very good |
+      | Criterion 1 | 10 | Very good |
     And I press "Save changes"
+    And I wait "3" seconds
     # Checking that it complains if you don't select a level for each criterion.
     And I should see "Please choose something for each criterion"
     And I grade by filling the rubric with:
-      | Criterion 1 | 50 | Very good |
-      | Criterion 2 | 10 | Mmmm, you can do it better |
-      | Criterion 3 | 5 | Not good |
+      | Criterion 1 | 10 | Very good |
+      | Criterion 2 | 5  | Mmmm, you can do it better |
+      | Criterion 3 | 5  | Not good |
     And I complete the advanced grading form with these values:
       | Feedback comments | In general... work harder... |
     # Checking that the user grade is correct.
-    And I should see "65" in the "Student 1" "table_row"
+    And I wait "3" seconds
+    And I should see "66.67" in the "student1@example.com" "table_row"
     # Updating the user grade.
     And I go to "Student 1" "Test assignment 1 name" activity advanced grading page
     And I grade by filling the rubric with:
-      | Criterion 1 | 20 | Bad, I changed my mind |
-      | Criterion 2 | 10 | Mmmm, you can do it better |
+      | Criterion 1 | 5 | Bad, I changed my mind |
+      | Criterion 2 | 5 | Mmmm, you can do it better |
       | Criterion 3 | 5 | Not good |
     #And the level with "50" points was previously selected for the rubric criterion "Criterion 1"
     #And the level with "20" points is selected for the rubric criterion "Criterion 1"
     And I save the advanced grading form
-    And I should see "35" in the "Student 1" "table_row"
+    And I wait "3" seconds
+    And I should see "50.00" in the "student1@example.com" "table_row"
     And I log out
     # Viewing it as a student.
     And I log in as "student1"
     And I am on "Course 1" course homepage
     And I follow "Test assignment 1 name"
-    And I should see "35" in the ".feedback" "css_element"
+    And I should see "50.00" in the ".feedback" "css_element"
     And I should see "Rubric test description" in the ".feedback" "css_element"
     And I should see "In general... work harder..."
-    And the level with "10" points is selected for the rubric criterion "Criterion 2"
-    And the level with "20" points is selected for the rubric criterion "Criterion 1"
-    And the level with "5" points is selected for the rubric criterion "Criterion 3"
     And I log out
     And I log in as "teacher1"
     And I am on "Course 1" course homepage
+    And I wait "3" seconds
     # Editing a rubric definition without regrading students.
     And I go to "Test assignment 1 name" advanced grading definition page
     And "Save as draft" "button" should not exist
-    And I click on "Move up" "button" in the "Criterion 1" "table_row"
+    And I click on "Move down" "button" in the "Criterion 1" "table_row"
     And I replace "Level 11" rubric level with "Level 11 edited" in "Criterion 1" criterion
     And I press "Save"
     And I should see "You are about to save changes to a rubric that has already been used for grading."
     And I set the field "menurubricregrade" to "Do not mark for regrade"
     And I press "Continue"
+    And I am on "Course 1" course homepage
+    And I wait "3" seconds
     And I log out
     # Check that the student still sees the grade.
     And I log in as "student1"
     And I am on "Course 1" course homepage
     And I follow "Test assignment 1 name"
-    And I should see "35" in the ".feedback" "css_element"
-    And the level with "20" points is selected for the rubric criterion "Criterion 1"
+    And I should see "50.00" in the ".feedback" "css_element"
     And I log out
     # Editing a rubric with significant changes.
     And I log in as "teacher1"
     And I am on "Course 1" course homepage
     And I go to "Test assignment 1 name" advanced grading definition page
     And I click on "Move down" "button" in the "Criterion 2" "table_row"
-    And I replace "1" rubric level with "60" in "Criterion 1" criterion
+    And I replace "5" rubric level with "6" in "Criterion 1" criterion
     And I press "Save"
-    And I should see "You are about to save significant changes to a rubric that has already been used for grading. The gradebook value will be unchanged, but the rubric will be hidden from students until their item is regraded."
+    And I should see "You are about to save significant changes to a rubric that has already been used for grading."
     And I press "Continue"
+    And I am on "Course 1" course homepage
+    And I wait "3" seconds
     And I log out
     # Check that the student doesn't see the grade.
     And I log in as "student1"
     And I am on "Course 1" course homepage
     And I follow "Test assignment 1 name"
-    And I should see "35" in the ".feedback" "css_element"
-    And the level with "20" points is not selected for the rubric criterion "Criterion 1"
+    And I should see "50.00" in the ".feedback" "css_element"
     And I log out
     # Regrade student.
     And I log in as "teacher1"
@@ -128,10 +123,9 @@ Feature: Rubrics can be created and edited
     And I log in as "student1"
     And I am on "Course 1" course homepage
     And I follow "Test assignment 1 name"
-    And I should see "31.82" in the ".feedback" "css_element"
-    And the level with "20" points is not selected for the rubric criterion "Criterion 1"
-    # Hide all rubric info for students
+    And I should see "53.33" in the ".feedback" "css_element"
     And I log out
+    # Hide all rubric info for students
     And I log in as "teacher1"
     And I am on "Course 1" course homepage
     And I go to "Test assignment 1 name" advanced grading definition page
@@ -143,6 +137,8 @@ Feature: Rubrics can be created and edited
     And I press "Save"
     And I set the field "menurubricregrade" to "Do not mark for regrade"
     And I press "Continue"
+    And I am on "Course 1" course homepage
+    And I wait "3" seconds
     And I log out
     # Students should not see anything.
     And I log in as "student1"

@@ -29,9 +29,11 @@ Feature: Publish rubrics as templates
       | Name | Assignment 1 rubric |
       | Description | Assignment 1 description |
     And I define the following rubric:
-      | Criterion 1 | Level 11 | 11 | Level 12 | 12 |
-      | Criterion 2 | Level 21 | 21 | Level 22 | 22 |
+      | Criterion 1 | Level 11 | 0 | Level 12 | 5 | Level 13 | 10 |
+      | Criterion 2 | Level 21 | 0 | Level 22 | 5 | Level 23 | 10 |
     And I press "Save rubric and make it ready"
+    And I am on "Course 1" course homepage
+    And I wait "3" seconds
     When I publish "Test assignment 1 name" grading form definition as a public template
     And I log out
     And I log in as "teacher1"

@@ -1,0 +1,57 @@
+{{!
+  This file is part of Moodle - http://moodle.org/
+
+  Moodle is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  Moodle is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+  @template gradingform_rubric/rubric_edit_options
+}}
+<div class="options">
+    <div class="{{optionsheading.class}}">
+        {{optionsheading.title}}
+    </div>
+    <input type="hidden" name="{{optionsset.name}}" value="{{optionsset.value}}">
+    {{#options}}
+        <div class="{{class}}">
+            {{#is_sortlevelsasc}}
+                <label for="{{sortlevelsasc.label.for}}">{{sortlevelsasc.label.text}}</label>
+                {{#sortlevelsasc.DISPLAY_EDIT_FULL}}
+                    <span class="value">
+                         <select name="{{sortlevelsasc.select.name}}" id="{{sortlevelsasc.select.id}}" class="{{sortlevelsasc.select.class}}">
+                             {{#sortlevelsasc.select.options }}
+                                 <option value="{{ value }}"{{# selected }} selected{{/ selected }}>
+                                     {{ dispaly }}
+                                 </option>
+                             {{/sortlevelsasc.select.options}}
+                         </select>
+                    </span>
+                {{/sortlevelsasc.DISPLAY_EDIT_FULL}}
+                {{^sortlevelsasc.DISPLAY_EDIT_FULL}}
+                    <span class="value">{{sortlevelsasc.spanText}}</span>
+                    {{#sortlevelsasc.DISPLAY_EDIT_FROZEN}}
+                        <input type="hidden" name="{{sortlevelsasc.hiddenField.name}}" class="{{sortlevelsasc.hiddenField.class}}" value="{{sortlevelsasc.hiddenField.value}}">
+                    {{/sortlevelsasc.DISPLAY_EDIT_FROZEN}}
+                {{/sortlevelsasc.DISPLAY_EDIT_FULL}}
+            {{/is_sortlevelsasc}}
+            {{#default_option.enabled}}
+                {{#default_option.DISPLAY_EDIT_FROZEN}}
+                    <input type="hidden" id="{{default_option.attrs.id}}" name="{{default_option.attrs.name}}" value="{{default_option.attrs.value}}">
+                {{/default_option.DISPLAY_EDIT_FROZEN}}
+                <input type="{{default_option.attrs.type}}" id="{{default_option.attrs.id}}" class="{{default_option.attrs.class}}" name="{{default_option.attrs.name}}" {{#default_option.attrs.checked}}checked="checked"{{/default_option.attrs.checked}} {{default_option.attrs.disabled}}>
+                <label for="{{default_option.attrs.id}}">{{default_option.attrs.labelString}}</label>
+            {{/default_option.enabled}}
+            {{{iconHtml}}}
+        </div>
+    {{/options}}
+</div>
