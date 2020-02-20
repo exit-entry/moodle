@@ -3934,6 +3934,7 @@ EDITOR.prototype = {
         this.pages = data.pages;
 
         for (i = 0; i < this.pages.length; i++) {
+            this.pages[i].height=this.pages[i].height+2;
             for (j = 0; j < this.pages[i].comments.length; j++) {
                 comment = this.pages[i].comments[j];
                 this.pages[i].comments[j] = new M.assignfeedback_editpdf.comment(this,
@@ -4687,13 +4688,13 @@ EDITOR.prototype = {
         if (this.currentpage > 0) {
             previousbutton.removeAttribute('disabled');
         } else {
-            previousbutton.setAttribute('disabled', 'true');
+//            previousbutton.setAttribute('disabled', 'true');
         }
         if (this.currentpage < (this.pagecount - 1)) {
             nextbutton.removeAttribute('disabled');
             nextpage = this.pages[this.currentpage + 1];
         } else {
-            nextbutton.setAttribute('disabled', 'true');
+//            nextbutton.setAttribute('disabled', 'true');
         }
 
         page = this.pages[this.currentpage];
@@ -4714,7 +4715,12 @@ EDITOR.prototype = {
         drawingcanvas.setStyle('backgroundPosition', backgroundposition);
         drawingcanvas.setStyle('width', page.width + 'px');
         drawingcanvas.setStyle('height', page.height * pagecounter + 'px');
-        drawingcanvas.scrollIntoView();
+      if (this.currentpage < (this.pagecount - 1)) {
+        drawingregion = this.get_dialogue_element(SELECTOR.DRAWINGREGION);
+        drawingregion.set('scrollTop', 1);
+      }
+
+//        drawingcanvas.scrollIntoView();
 
         // Update page select.
         this.get_dialogue_element(SELECTOR.PAGESELECT).set('selectedIndex', this.currentpage);
@@ -4771,6 +4777,15 @@ EDITOR.prototype = {
      */
     previous_page: function(e) {
         e.preventDefault();
+
+      drawingregion = this.get_dialogue_element(SELECTOR.DRAWINGREGION);
+      scrollTop = drawingregion.get('scrollTop');
+
+      if (scrollTop > 100) {
+        scrollTop = drawingregion.set('scrollTop', 1);
+        return;
+      }
+
         this.currentpage--;
         if (this.currentpage < 0) {
             this.currentpage = 0;

@@ -144,7 +144,7 @@ class assignfeedback_editpdf_renderer extends plugin_renderer_base {
         $iconshortcut = $this->get_shortcut('navigate-previous-button');
         $iconalt = get_string('navigateprevious', 'assignfeedback_editpdf', $iconshortcut);
         $iconhtml = $this->image_icon($nav_prev, $iconalt, 'assignfeedback_editpdf');
-        $navigation1 .= html_writer::tag('button', $iconhtml, array('disabled'=>'true',
+        $navigation1 .= html_writer::tag('button', $iconhtml, array(//'disabled'=>'true',
             'class'=>'navigate-previous-button', 'accesskey' => $this->get_shortcut('navigate-previous-button')));
         $navigation1 .= html_writer::tag('select', null, array('disabled'=>'true',
             'aria-label' => get_string('gotopage', 'assignfeedback_editpdf'), 'class'=>'navigate-page-select',
@@ -152,7 +152,7 @@ class assignfeedback_editpdf_renderer extends plugin_renderer_base {
         $iconshortcut = $this->get_shortcut('navigate-next-button');
         $iconalt = get_string('navigatenext', 'assignfeedback_editpdf', $iconshortcut);
         $iconhtml = $this->image_icon($nav_next, $iconalt, 'assignfeedback_editpdf');
-        $navigation1 .= html_writer::tag('button', $iconhtml, array('disabled'=>'true',
+        $navigation1 .= html_writer::tag('button', $iconhtml, array(//'disabled'=>'true',
             'class'=>'navigate-next-button', 'accesskey' => $this->get_shortcut('navigate-next-button')));
 
         $navigation1 = html_writer::div($navigation1, 'navigation', array('role'=>'navigation'));
