@@ -42,24 +42,24 @@ class assignfeedback_editpdf_renderer extends plugin_renderer_base {
     private function get_shortcut($name) {
 
         $shortcuts = array('navigate-previous-button' => 'j',
-            'rotateleft' => 'q',
-            'rotateright' => 'w',
-            'navigate-page-select' => 'k',
-            'navigate-next-button' => 'l',
-            'searchcomments' => 'h',
-            'expcolcomments' => 'g',
-            'comment' => 'z',
-            'commentcolour' => 'x',
-            'select' => 'c',
-            'drag' => 'd',
-            'pen' => 'y',
-            'line' => 'u',
-            'rectangle' => 'i',
-            'oval' => 'o',
-            'highlight' => 'p',
-            'annotationcolour' => 'r',
-            'stamp' => 'n',
-            'currentstamp' => 'm');
+                           'rotateleft' => 'q',
+                           'rotateright' => 'w',
+                           'navigate-page-select' => 'k',
+                           'navigate-next-button' => 'l',
+                           'searchcomments' => 'h',
+                           'expcolcomments' => 'g',
+                           'comment' => 'z',
+                           'commentcolour' => 'x',
+                           'select' => 'c',
+                           'drag' => 'd',
+                           'pen' => 'y',
+                           'line' => 'u',
+                           'rectangle' => 'i',
+                           'oval' => 'o',
+                           'highlight' => 'p',
+                           'annotationcolour' => 'r',
+                           'stamp' => 'n',
+                           'currentstamp' => 'm');
 
 
         // Return the shortcut.
@@ -114,12 +114,12 @@ class assignfeedback_editpdf_renderer extends plugin_renderer_base {
         $linkid = html_writer::random_id();
         if ($widget->readonly) {
             $launcheditorlink = html_writer::tag('a',
-                                              get_string('viewfeedbackonline', 'assignfeedback_editpdf'),
-                                              array('id'=>$linkid, 'class'=>'btn', 'href'=>'#'));
+                get_string('viewfeedbackonline', 'assignfeedback_editpdf'),
+                array('id'=>$linkid, 'class'=>'btn', 'href'=>'#'));
         } else {
             $launcheditorlink = html_writer::tag('a',
-                                              get_string('launcheditor', 'assignfeedback_editpdf'),
-                                              array('id'=>$linkid, 'class'=>'btn', 'href'=>'#'));
+                get_string('launcheditor', 'assignfeedback_editpdf'),
+                array('id'=>$linkid, 'class'=>'btn', 'href'=>'#'));
         }
         $links = $launcheditorlink;
         $html .= '<input type="hidden" name="assignfeedback_editpdf_haschanges" value="false"/>';
@@ -144,15 +144,15 @@ class assignfeedback_editpdf_renderer extends plugin_renderer_base {
         $iconshortcut = $this->get_shortcut('navigate-previous-button');
         $iconalt = get_string('navigateprevious', 'assignfeedback_editpdf', $iconshortcut);
         $iconhtml = $this->image_icon($nav_prev, $iconalt, 'assignfeedback_editpdf');
-        $navigation1 .= html_writer::tag('button', $iconhtml, array('disabled'=>'true',
+        $navigation1 .= html_writer::tag('button', $iconhtml, array(//'disabled'=>'true',
             'class'=>'navigate-previous-button', 'accesskey' => $this->get_shortcut('navigate-previous-button')));
         $navigation1 .= html_writer::tag('select', null, array('disabled'=>'true',
-            'aria-label' => get_string('gotopage', 'assignfeedback_editpdf'), 'class'=>'navigate-page-select',
-            'accesskey' => $this->get_shortcut('navigate-page-select')));
+                                                               'aria-label' => get_string('gotopage', 'assignfeedback_editpdf'), 'class'=>'navigate-page-select',
+                                                               'accesskey' => $this->get_shortcut('navigate-page-select')));
         $iconshortcut = $this->get_shortcut('navigate-next-button');
         $iconalt = get_string('navigatenext', 'assignfeedback_editpdf', $iconshortcut);
         $iconhtml = $this->image_icon($nav_next, $iconalt, 'assignfeedback_editpdf');
-        $navigation1 .= html_writer::tag('button', $iconhtml, array('disabled'=>'true',
+        $navigation1 .= html_writer::tag('button', $iconhtml, array(//'disabled'=>'true',
             'class'=>'navigate-next-button', 'accesskey' => $this->get_shortcut('navigate-next-button')));
 
         $navigation1 = html_writer::div($navigation1, 'navigation', array('role'=>'navigation'));
@@ -211,7 +211,7 @@ class assignfeedback_editpdf_renderer extends plugin_renderer_base {
                                        $navigation3 .
                                        $toolbargroup .
                                        $clearfix,
-                                       'pageheader');
+            'pageheader');
         $body = $pageheader;
 
         // Loading progress bar.
@@ -253,8 +253,8 @@ class assignfeedback_editpdf_renderer extends plugin_renderer_base {
         );
 
         $this->page->requires->yui_module('moodle-assignfeedback_editpdf-editor',
-                                          'M.assignfeedback_editpdf.editor.init',
-                                          $editorparams);
+            'M.assignfeedback_editpdf.editor.init',
+            $editorparams);
 
         $this->page->requires->strings_for_js(array(
             'yellow',
