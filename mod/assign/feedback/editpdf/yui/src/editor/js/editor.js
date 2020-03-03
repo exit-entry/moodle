@@ -224,6 +224,14 @@ EDITOR.prototype = {
     editingcomment: false,
 
     /**
+     * Timestamp of last scroll
+     * @property lastscrolltime
+     * @type int
+     * @protected
+     */
+    lastscrolltime: 0,
+
+    /**
      * Should inactive comments be collapsed?
      *
      * @property collapsecomments
@@ -367,7 +375,7 @@ EDITOR.prototype = {
      * @method open_in_panel
      */
     open_in_panel: function(panel) {
-        var drawingcanvas;
+      var drawingcanvas, drawingregion;
 
         this.panel = panel;
         panel.append(this.get('body'));
@@ -377,6 +385,9 @@ EDITOR.prototype = {
 
         drawingcanvas = this.get_dialogue_element(SELECTOR.DRAWINGCANVAS);
         this.graphic = new Y.Graphic({render: drawingcanvas});
+
+        drawingregion = this.get_dialogue_element(SELECTOR.DRAWINGREGION);
+        drawingregion.on('scroll', this.simulate_scroll, this);
 
         if (!this.get('readonly')) {
             drawingcanvas.on('gesturemovestart', this.edit_start, null, this);
@@ -394,7 +405,7 @@ EDITOR.prototype = {
      * @method link_handler
      */
     link_handler: function(e) {
-        var drawingcanvas;
+        var drawingcanvas, drawingregion;
         var resize = true;
         e.preventDefault();
 
@@ -416,6 +427,9 @@ EDITOR.prototype = {
 
             drawingcanvas = this.get_dialogue_element(SELECTOR.DRAWINGCANVAS);
             this.graphic = new Y.Graphic({render: drawingcanvas});
+
+            drawingregion = this.get_dialogue_element(SELECTOR.DRAWINGREGION);
+            drawingregion.on('scroll', this.simulate_scroll, this);
 
             if (!this.get('readonly')) {
                 drawingcanvas.on('gesturemovestart', this.edit_start, null, this);
@@ -623,6 +637,7 @@ EDITOR.prototype = {
         this.pages = data.pages;
 
         for (i = 0; i < this.pages.length; i++) {
+            this.pages[i].height=this.pages[i].height+2;
             for (j = 0; j < this.pages[i].comments.length; j++) {
                 comment = this.pages[i].comments[j];
                 this.pages[i].comments[j] = new M.assignfeedback_editpdf.comment(this,
@@ -1358,32 +1373,57 @@ EDITOR.prototype = {
      */
     change_page: function() {
         var drawingcanvas = this.get_dialogue_element(SELECTOR.DRAWINGCANVAS),
-            page,
-            previousbutton,
-            nextbutton;
+          page,
+          nextpage,
+          pagecounter,
+          backgroundimage,
+          backgroundposition,
+          previousbutton,
+          nextbutton;
 
         previousbutton = this.get_dialogue_element(SELECTOR.PREVIOUSBUTTON);
         nextbutton = this.get_dialogue_element(SELECTOR.NEXTBUTTON);
 
+        nextpage = false;
+        pagecounter = 1;
+        backgroundimage = backgroundposition = '';
+
         if (this.currentpage > 0) {
             previousbutton.removeAttribute('disabled');
         } else {
-            previousbutton.setAttribute('disabled', 'true');
+//            previousbutton.setAttribute('disabled', 'true');
         }
         if (this.currentpage < (this.pagecount - 1)) {
             nextbutton.removeAttribute('disabled');
+            nextpage = this.pages[this.currentpage + 1];
         } else {
-            nextbutton.setAttribute('disabled', 'true');
+//            nextbutton.setAttribute('disabled', 'true');
         }
 
-        page = this.pages[this.currentpage];
-        if (this.loadingicon) {
-            this.loadingicon.hide();
-        }
-        drawingcanvas.setStyle('backgroundImage', 'url("' + page.url + '")');
-        drawingcanvas.setStyle('width', page.width + 'px');
-        drawingcanvas.setStyle('height', page.height + 'px');
-        drawingcanvas.scrollIntoView();
+      page = this.pages[this.currentpage];
+      backgroundimage = 'url("' + page.url + '")';
+      backgroundposition = '0 0';
+
+      if (nextpage) {
+        backgroundimage += ', url("' + nextpage.url + '")';
+        backgroundposition += ', 0 ' + page.height + 'px';
+
+        pagecounter++;
+      }
+
+      if (this.loadingicon) {
+        this.loadingicon.hide();
+      }
+      drawingcanvas.setStyle('backgroundImage', backgroundimage);
+      drawingcanvas.setStyle('backgroundPosition', backgroundposition);
+      drawingcanvas.setStyle('width', page.width + 'px');
+      drawingcanvas.setStyle('height', page.height * pagecounter + 'px');
+      if (this.currentpage < (this.pagecount - 1)) {
+        drawingregion = this.get_dialogue_element(SELECTOR.DRAWINGREGION);
+        drawingregion.set('scrollTop', 1);
+      }
+
+//        drawingcanvas.scrollIntoView();
 
         // Update page select.
         this.get_dialogue_element(SELECTOR.PAGESELECT).set('selectedIndex', this.currentpage);
@@ -1440,6 +1480,16 @@ EDITOR.prototype = {
      */
     previous_page: function(e) {
         e.preventDefault();
+
+
+      drawingregion = this.get_dialogue_element(SELECTOR.DRAWINGREGION);
+      scrollTop = drawingregion.get('scrollTop');
+
+      if (scrollTop > 100) {
+        scrollTop = drawingregion.set('scrollTop', 1);
+        return;
+      }
+
         this.currentpage--;
         if (this.currentpage < 0) {
             this.currentpage = 0;
@@ -1463,7 +1513,68 @@ EDITOR.prototype = {
         this.change_page();
     },
 
-    /**
+      /**
+       * Prevent skipping pages
+       * when scrolling by hand or touch
+       * @protected
+       * @method skip_scroll
+       */
+      skip_scroll: function(drawingregion, page_height, scrollposition) {
+        if (scrollposition == 0 || scrollposition == page_height - 1) {
+          drawingregion.set('scrollTop', page_height - 1);
+          return true;
+        }
+
+        if (scrollposition > page_height) {
+          drawingregion.set('scrollTop', 1);
+          return true;
+        }
+
+        return false;
+      },
+
+      /**
+       * Simulate the transition to the next (previous) page
+       * when the canvas for drawing scrolls to extreme positions
+       * @protected
+       * @method simulate_scroll
+       */
+      simulate_scroll: function() {
+        var drawingregion,
+          previousbutton,
+          nextbutton,
+          page,
+          scrollposition;
+
+        drawingregion = this.get_dialogue_element(SELECTOR.DRAWINGREGION);
+        page = this.pages[this.currentpage];
+        scrollposition = drawingregion.get('scrollTop');
+
+        // Prevent skipping multiple pages at once
+        if (this.lastscrolltime >= (Date.now() - 500)
+          && this.skip_scroll(drawingregion, page.height, scrollposition)
+        ) return;
+
+        // Go to next page if it exists
+        if (scrollposition >= page.height && this.currentpage < this.pages.length - 1) {
+          this.lastscrolltime = Date.now();
+          nextbutton = this.get_dialogue_element(SELECTOR.NEXTBUTTON);
+          nextbutton.simulate("click");
+          drawingregion.set('scrollTop', 1);
+          return;
+        }
+
+        // Go to previous page if it exists
+        if (scrollposition <= 0 && this.currentpage > 0) {
+          this.lastscrolltime = Date.now();
+          previousbutton = this.get_dialogue_element(SELECTOR.PREVIOUSBUTTON);
+          previousbutton.simulate("click");
+          drawingregion.set('scrollTop', page.height - 1);
+          return;
+        }
+      },
+
+  /**
      * Update any absolutely positioned nodes, within each drawable, when the drawing canvas is scrolled
      * @protected
      * @method move_canvas
